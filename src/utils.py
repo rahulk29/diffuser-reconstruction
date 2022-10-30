@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import matplotlib.pyplot as plt
-from skimage import restoration
+from skimage import color, transform, restoration
 
 DATA_PATH = "../data"
 
@@ -16,15 +16,21 @@ def load_lensed_image(n):
 
 def display_array(arr):
     plt.figure()
+    plt.gray()
+    print(arr.shape)
     plt.imshow(arr)
     plt.show()
 
 def deconvolve(psf, measured_data):
-    return restoration.richardson_lucy(measured_data, psf)
+    print(measured_data.shape, psf.shape)
+    deconvolved, _ = restoration.unsupervised_wiener(color.rgb2gray(measured_data), color.rgb2gray(psf))
+    return deconvolved
 
 if __name__ == "__main__":
-    psf = load_psf()
-    measured_data = load_diffuser_image(10)
+    for i in range(1, 20):
+        scale_factor = 0.012*i
+        psf = transform.resize(load_psf(), (scale_factor*1080, scale_factor*1920))
+        measured_data = load_diffuser_image(10)
 
-    result = deconvolve(psf, measured_data)
-    display_array(result)
+        result = deconvolve(psf, measured_data)
+        display_array(result)
