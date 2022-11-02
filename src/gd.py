@@ -3,7 +3,7 @@ import math
 import numpy.fft as fft
 import matplotlib.pyplot as plt
 import os
-from PIL import Image
+from PIL import Image, ImageOps
 
 import utils
 
@@ -11,13 +11,13 @@ import utils
 class GDSolver:
     def __init__(
         self,
-        f=0.125,
+        f=0.5,
         nx=3,
         ny=4,
         fill_factor=0.8,
-        iters=100,
-        psf_file="../data/tutorial/psf_sample.tif",
-        data_file="../data/tutorial/rawdata_hand_sample.tif",
+        iters=500,
+        psf_file="../data/psf.npy",
+        data_file="../data/diffuser/im10.npy",
         method="fista",
         proj=True,
     ):
@@ -70,14 +70,8 @@ class GDSolver:
         return X_out
 
     def load_data(self):
-        psf_img = Image.open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), self.psf_file)
-        )
-        self.psf = np.array(psf_img, dtype="float32")
-        data_img = Image.open(
-            os.path.join(os.path.dirname(os.path.abspath(__file__)), self.data_file)
-        )
-        self.data = self.crop_array(np.array(data_img, dtype="float32"))
+        self.psf = np.load(self.psf_file).astype("float32")[:, :, 0]
+        self.data = np.load(self.data_file).astype("float32")[:, :, 0]
 
         # Subtract non-trivial background
         bg = np.mean(self.psf[5:15, 5:15])
@@ -85,6 +79,17 @@ class GDSolver:
         self.data -= bg
 
         # Downsample PSF and data
+        if self.psf.shape != self.data.shape:
+            if self.psf.shape[0] * self.data.shape[1] != self.psf.shape[1] * self.data.shape[0]:
+                raise Exception("PSF does not have the same aspect ratio as raw data")
+            factor = self.psf.shape[0] / self.data.shape[0]
+            if not np.isclose(utils.next_pow2(factor), factor):
+                raise Exception("PSF and data cannot be resized as they do not differ in size by a power of 2")
+            if factor < 1:
+                self.data = utils.resize(self.data, factor)
+            else:
+                self.psf = utils.resize(self.psf, 1/factor)
+                
         self.psf = utils.resize(self.psf, self.f)
         self.data = utils.resize(self.data, self.f)
 
@@ -170,7 +175,7 @@ class GDSolver:
 
 
 if __name__ == "__main__":
-    gd_solver = GDSolver()
+    gd_solver = GDSolver(fill_factor=1)
 
     utils.display_array(gd_solver.psf, "PSF")
     utils.display_array(gd_solver.data, "Raw data")
