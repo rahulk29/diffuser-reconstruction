@@ -44,7 +44,7 @@ def load_lensed_image(n):
     )
 
 
-def display_array(arr, title):
+def display_array(arr, title, cmap=None):
     plt.figure()
-    plt.imshow(arr, cmap="gray")
+    plt.imshow(arr, cmap=cmap)
     plt.title(title)

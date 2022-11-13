@@ -20,15 +20,17 @@ class GDSolver:
         data_file="../data/diffuser/im10.npy",
         method="fista",
         proj=True,
+        channel=0,
     ):
-        self.f = f                      # Downsampling factor
-        self.nx = nx                    # Number of sensor rows
-        self.ny = ny                    # Number of sensor columns
+        self.f = f  # Downsampling factor
+        self.nx = nx  # Number of sensor rows
+        self.ny = ny  # Number of sensor columns
         self.fill_factor = fill_factor  # Sensor fill factor
-        self.iters = iters              # Number of iterations to run with gradient descent
-        self.psf_file = psf_file        # TIF file with PSF
-        self.data_file = data_file      # TIF file with raw data
-        self.method = method            # Gradient descent method
+        self.iters = iters  # Number of iterations to run with gradient descent
+        self.psf_file = psf_file  # TIF file with PSF
+        self.data_file = data_file  # TIF file with raw data
+        self.method = method  # Gradient descent method
+        self.channel = channel  # Color channel (usually 0, 1, 2)
 
         # Function for projecting final image
         self.proj_fn = lambda x: np.maximum(0, x) if proj else lambda x: x
@@ -70,8 +72,8 @@ class GDSolver:
         return X_out
 
     def load_data(self):
-        self.psf = np.load(self.psf_file).astype("float32")[:, :, 0]
-        self.data = np.load(self.data_file).astype("float32")[:, :, 0]
+        self.psf = np.load(self.psf_file).astype("float32")[:, :, self.channel]
+        self.data = np.load(self.data_file).astype("float32")[:, :, self.channel]
 
         # Subtract non-trivial background
         bg = np.mean(self.psf[5:15, 5:15])
@@ -80,16 +82,21 @@ class GDSolver:
 
         # Downsample PSF and data
         if self.psf.shape != self.data.shape:
-            if self.psf.shape[0] * self.data.shape[1] != self.psf.shape[1] * self.data.shape[0]:
+            if (
+                self.psf.shape[0] * self.data.shape[1]
+                != self.psf.shape[1] * self.data.shape[0]
+            ):
                 raise Exception("PSF does not have the same aspect ratio as raw data")
             factor = self.psf.shape[0] / self.data.shape[0]
             if not np.isclose(utils.next_pow2(factor), factor):
-                raise Exception("PSF and data cannot be resized as they do not differ in size by a power of 2")
+                raise Exception(
+                    "PSF and data cannot be resized as they do not differ in size by a power of 2"
+                )
             if factor < 1:
                 self.data = utils.resize(self.data, factor)
             else:
-                self.psf = utils.resize(self.psf, 1/factor)
-                
+                self.psf = utils.resize(self.psf, 1 / factor)
+
         self.psf = utils.resize(self.psf, self.f)
         self.data = utils.resize(self.data, self.f)
 
@@ -175,13 +182,14 @@ class GDSolver:
 
 
 if __name__ == "__main__":
-    gd_solver = GDSolver(fill_factor=1)
+    images = []
+    for channel in range(3):
+        print(f"channel = {channel}")
+        gd_solver = GDSolver(fill_factor=0.8, channel=channel)
+        images.append(gd_solver.run())
 
-    utils.display_array(gd_solver.psf, "PSF")
-    utils.display_array(gd_solver.data, "Raw data")
+    image = np.stack(images, axis=-1)
 
-    image = gd_solver.run()
-
-    utils.display_array(image, "Final reconstruction after {} iterations".format(gd_solver.iters))
+    utils.display_array(image, "Final reconstruction", cmap="gray")
 
     plt.show()
