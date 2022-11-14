@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import lpips
+# import lpips
 
 import numpy as np
 import os, sys, time, glob
@@ -73,7 +73,6 @@ for epoch in range(2):  # loop over the dataset multiple times
         optimizer.zero_grad()
 
         # forward + backward + optimize
-        print(inputs.shape)
         outputs = le_admm_u2(inputs)
         loss = criterion(outputs, labels)
         loss.backward()
@@ -85,6 +84,6 @@ for epoch in range(2):  # loop over the dataset multiple times
             print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
             running_loss = 0.0
 
-print('Finished Training')
+print('Finished training')
 
-torch.save(net.state_dict(), MODEL_PATH)
+torch.save(le_admm_u2.state_dict(), MODEL_PATH)
