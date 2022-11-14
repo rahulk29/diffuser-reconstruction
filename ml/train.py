@@ -17,10 +17,10 @@ from ensemble import *
 from utils import *
 
 ML_DIR = os.path.dirname(os.path.abspath(__file__))
-DATASET_DIR = os.path.join(ML_DIR, "../data")
-CSV_PATH = os.path.join(DATASET_DIR, "data.csv")
-DATA_DIR = os.path.join(DATASET_DIR, "diffuser")
-LABEL_DIR = os.path.join(DATASET_DIR, "lensed")
+DATASET_DIR = os.path.join(ML_DIR, "../../dataset")
+CSV_PATH = os.path.join(DATASET_DIR, "dataset_train_short.csv")
+DATA_DIR = os.path.join(DATASET_DIR, "diffuser_images")
+LABEL_DIR = os.path.join(DATASET_DIR, "ground_truth_lensed")
 MODEL_PATH = os.path.join(ML_DIR, "saved_models/model_le_admm_u_custom.pt")
 
 my_device = 'cpu'
@@ -29,9 +29,12 @@ var_options = {'plain_admm': [],
                'mu_and_tau': ['mus', 'tau'],
               }
 
-num_images = 1000
+num_epochs = 2
+num_print = 5
+
+num_images = 100
 trainset = DiffuserDataset_preprocessed_number(CSV_PATH, DATA_DIR, LABEL_DIR, None, num_images, transform=ToTensor())
-trainloader = torch.utils.data.DataLoader(trainset, batch_size = 1, shuffle=True, num_workers=2)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size = 1, shuffle=True)
 
 learning_options_admm = {'learned_vars': var_options['mu_and_tau']} 
 
@@ -58,30 +61,30 @@ le_admm_u_unet = unet_model.UNet270480((3,270,480))
 le_admm_u2 = MyEnsemble(le_admm_u_admm, le_admm_u_unet)
 
 # criterion = lpips.LPIPS()
-criterion = torch.nn.MSELoss(size_average=None)
+criterion = nn.MSELoss(size_average=None)
 
-optimizer = optim.Adam(le_admm_u2.parameters(), lr=0.0001)
+optimizer = optim.Adam(le_admm_u2.parameters(), lr=1e-8)
 
 for epoch in range(2):  # loop over the dataset multiple times
 
     running_loss = 0.0
     for i, data in enumerate(trainloader, 0):
         # get the inputs; data is a list of [inputs, labels]
-        inputs, labels = data['image'], data['label']
-
-        # zero the parameter gradients
-        optimizer.zero_grad()
+        inputs, labels = data['image'].to(my_device), data['label'].to(my_device)
 
         # forward + backward + optimize
         outputs = le_admm_u2(inputs)
         loss = criterion(outputs, labels)
+
+        # zero the parameter gradients
+        optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
         # print statistics
         running_loss += loss.item()
-        if i % 100 == 99:    # print every 2000 mini-batches
-            print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / 2000:.3f}')
+        if i % num_print == num_print - 1:    # print every 2000 mini-batches
+            print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / num_print:.3f}')
             running_loss = 0.0
 
 print('Finished training')

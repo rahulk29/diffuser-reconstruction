@@ -111,13 +111,13 @@ def soft_2d_gradient2_rgb(model, v,h,tau):
     vv = torch.cat([v, z1] , 2)
     hh = torch.cat([h, z2] , 3)
     
-    mag = torch.sqrt(vv*vv + hh*hh)
+    mag = vv*vv + hh*hh
     magt = torch.max(mag - tau, z0, out=None)
     mag = torch.max(mag - tau, z0, out=None) + tau
     #smax = torch.nn.Softmax()
     #magt = smax(mag - tau, torch.zeros_like(mag, dtype = torch.float32))
     #mag = smax(mag - tau, torch.zeros_like(mag, dtype = torch.float32)) + tau
-    mmult = magt/(mag)#+1e-5)
+    mmult = magt/(mag +1e-5)
 
     return v*mmult[:,:, :-1,:], h*mmult[:,:, :,:-1]
 
