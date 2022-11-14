@@ -86,4 +86,4 @@ for epoch in range(2):  # loop over the dataset multiple times
 
 print('Finished training')
 
-torch.save(le_admm_u2.state_dict(), MODEL_PATH)
+torch.save(le_admm_u2, MODEL_PATH)
