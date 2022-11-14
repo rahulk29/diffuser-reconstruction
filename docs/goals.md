@@ -34,3 +34,19 @@ Iterative optimization ideas:
   * Assuming all cameras have the same PSF
   * Assuming cameras are grid-aligned and evenly spaced
   * Only reconstructing one color channel
+
+## PSF-Free Reconstruction
+
+Use machine learning methods to train a neural network for reconstructing
+diffuser cam images.
+
+Then use another machine learning method to search for an input image
+that results in an output image that is approximately a single point.
+This input image is the PSF.
+
+This implicit PSF measurement eliminates the need for sensitive, error-prone,
+and time consuming manual measurements of the PSF in an optics lab.
+
+We can then use the learned PSF in classical algorithms.
+
+We will apply machine learning and classical methods to MCam.
