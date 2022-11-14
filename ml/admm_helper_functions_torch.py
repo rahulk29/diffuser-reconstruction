@@ -108,7 +108,6 @@ def soft_2d_gradient2_rgb(model, v,h,tau):
     z1 = torch.zeros(model.batch_size, 3, 1, model.DIMS1*2, dtype = torch.float32, device=model.cuda_device)
     z2 = torch.zeros(model.batch_size, 3, model.DIMS0*2, 1, dtype= torch.float32, device=model.cuda_device)
 
-    print(v.shape, z1.shape)
     vv = torch.cat([v, z1] , 2)
     hh = torch.cat([h, z2] , 3)
     

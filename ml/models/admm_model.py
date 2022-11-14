@@ -49,7 +49,7 @@ class ADMM_Net(nn.Module):
         
         self.h_complex = torch.stack((pad_zeros_torch(self, self.h_var), self.h_zeros),2).unsqueeze(0)
         
-        self.H = torch.fft.fft(batch_ifftshift2d(self.h_complex).squeeze(), 2)   
+        self.H = torch.fft(batch_ifftshift2d(self.h_complex).squeeze(), 2)   
         self.Hconj =  self.H* torch.tensor([1,-1], dtype = torch.float32, device=self.cuda_device) 
         self.HtH = complex_abs(complex_multiplication(self.H, self.Hconj))
          
@@ -82,6 +82,7 @@ class ADMM_Net(nn.Module):
 
 
     def forward(self, inputs):    
+        
         self.batch_size = inputs.shape[0]
 
         #self.HtH = complex_abs(complex_multiplication(self.H, self.Hconj))
