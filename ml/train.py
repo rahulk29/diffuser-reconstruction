@@ -18,7 +18,7 @@ from utils import *
 
 ML_DIR = os.path.dirname(os.path.abspath(__file__))
 DATASET_DIR = os.path.join(ML_DIR, "../../dataset")
-CSV_PATH = os.path.join(DATASET_DIR, "dataset_train_short.csv")
+CSV_PATH = os.path.join(DATASET_DIR, "dataset_train.csv")
 DATA_DIR = os.path.join(DATASET_DIR, "diffuser_images")
 LABEL_DIR = os.path.join(DATASET_DIR, "ground_truth_lensed")
 MODEL_PATH = os.path.join(ML_DIR, "saved_models/model_le_admm_u_custom.pt")
@@ -30,10 +30,9 @@ var_options = {'plain_admm': [],
               }
 
 num_epochs = 2
-num_print = 5
+num_print = 10
 
-num_images = 100
-trainset = DiffuserDataset_preprocessed_number(CSV_PATH, DATA_DIR, LABEL_DIR, None, num_images, transform=ToTensor())
+trainset = DiffuserDataset_preprocessed(CSV_PATH, DATA_DIR, LABEL_DIR, None, transform=ToTensor())
 trainloader = torch.utils.data.DataLoader(trainset, batch_size = 1, shuffle=True)
 
 learning_options_admm = {'learned_vars': var_options['mu_and_tau']} 
@@ -63,7 +62,7 @@ le_admm_u2 = MyEnsemble(le_admm_u_admm, le_admm_u_unet)
 # criterion = lpips.LPIPS()
 criterion = nn.MSELoss(size_average=None)
 
-optimizer = optim.Adam(le_admm_u2.parameters(), lr=1e-8)
+optimizer = optim.Adam(le_admm_u2.parameters(), lr=1e-2)
 
 for epoch in range(2):  # loop over the dataset multiple times
 

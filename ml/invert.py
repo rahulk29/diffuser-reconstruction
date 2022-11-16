@@ -39,7 +39,7 @@ def invert_psf():
     y[:, :, cy-3:cy+3, cx-3:cx+3] = 1
     y = y.to(device)
 
-    iters = 1000
+    iters = 100000
     with torch.autograd.detect_anomaly():
         for i in range(iters):
             optimizer.zero_grad()
