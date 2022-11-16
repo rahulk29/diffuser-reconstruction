@@ -7,7 +7,8 @@ import utils
 import matplotlib.pyplot as plt
 sys.path.append('models/')
 
-PSF_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'inverted_psfs/psf.pt')
+num_save = 1000
+PSF_FILE_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'inverted_psfs/psf_final.pt')
 
 def invert_psf():
     img_index = 3
@@ -47,6 +48,11 @@ def invert_psf():
             cost.backward()
             optimizer.step()
             print(f'Completed iteration {i+1}/{iters}')
+
+            if i % num_save == num_save - 1:
+                print('Saving current image...')
+                intermediate_psf_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), f'inverted_psfs/psf_{i}.pt')
+                torch.save(x, intermediate_psf_file_path)
 
     torch.save(x, PSF_FILE_PATH)
 

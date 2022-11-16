@@ -21,7 +21,6 @@ DATASET_DIR = os.path.join(ML_DIR, "../../dataset")
 CSV_PATH = os.path.join(DATASET_DIR, "dataset_train.csv")
 DATA_DIR = os.path.join(DATASET_DIR, "diffuser_images")
 LABEL_DIR = os.path.join(DATASET_DIR, "ground_truth_lensed")
-MODEL_PATH = os.path.join(ML_DIR, "saved_models/model_le_admm_u_custom.pt")
 
 my_device = 'cpu'
 
@@ -31,6 +30,7 @@ var_options = {'plain_admm': [],
 
 num_epochs = 2
 num_print = 10
+num_save = 1000
 
 trainset = DiffuserDataset_preprocessed(CSV_PATH, DATA_DIR, LABEL_DIR, None, transform=ToTensor())
 trainloader = torch.utils.data.DataLoader(trainset, batch_size = 1, shuffle=True)
@@ -85,7 +85,13 @@ for epoch in range(2):  # loop over the dataset multiple times
         if i % num_print == num_print - 1:    # print every 2000 mini-batches
             print(f'[{epoch + 1}, {i + 1:5d}] loss: {running_loss / num_print:.3f}')
             running_loss = 0.0
+        if i % num_save == num_save - 1:
+            print('Saving current model...')
+            MODEL_PATH = os.path.join(ML_DIR, f"saved_models/model_le_admm_u_custom_{i}.pt")
+            torch.save(le_admm_u2, MODEL_PATH)
 
-print('Finished training')
 
+print('Finished training, saving final model')
+
+MODEL_PATH = os.path.join(ML_DIR, f"saved_models/model_le_admm_u_custom_final.pt")
 torch.save(le_admm_u2, MODEL_PATH)
