@@ -3,7 +3,7 @@ import torch.nn as nn
 from admm_helper_functions_torch import *
 from admm_rgb_pytorch import *
 import admm_filters_no_soft as admm_s
-from utils import crop_array, preplot
+from utils import crop_array
 import matplotlib.pyplot as plt
 
 class ADMM_Net(nn.Module):

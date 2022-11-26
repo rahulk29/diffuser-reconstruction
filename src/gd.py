@@ -106,7 +106,7 @@ class GDSolver:
                 self.psf = utils.resize(self.psf, 1 / factor)
 
         self.psf = utils.resize(self.psf, self.f)
-        self.data = utils.resize(self.data, self.f)
+        self.data = self.crop_array(utils.resize(self.data, self.f))
 
         # Normalize PSF and measured data
         self.psf /= np.linalg.norm(self.psf.ravel())
@@ -195,10 +195,11 @@ if __name__ == "__main__":
     #     print(f"channel = {channel}")
     #     gd_solver = GDSolver(fill_factor=0.8, channel=channel)
     #     images.append(gd_solver.run())
-    gd_solver = GDSolver(f=0.25, fill_factor=0.8, psf_file="../../DiffuserCam-Tutorial/tutorial/psf_sample.npy", data_file="../../DiffuserCam-Tutorial/tutorial/rawdata_hand_sample.npy")
+    gd_solver = GDSolver(f=0.25, fill_factor=0.8, iters=100, psf_file="../../DiffuserCam-Tutorial/tutorial/psf_sample.npy", data_file="../../DiffuserCam-Tutorial/tutorial/rawdata_hand_sample.npy")
 
     image = gd_solver.run()
 
+    utils.display_array(gd_solver.data, "Input data", cmap="gray")
     utils.display_array(image, "Final reconstruction", cmap="gray")
 
     plt.show()

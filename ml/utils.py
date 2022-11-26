@@ -433,6 +433,7 @@ def preplot(image):
     return out_image[60:,62:-38,:]
 
 def preplotn(image):
+    image = np.transpose(image, (1,2,0))
     image_color = np.zeros_like(image); 
     image_color[:,:,0] = image[:,:,2]; image_color[:,:,1]  = image[:,:,1]
     image_color[:,:,2] = image[:,:,0];
