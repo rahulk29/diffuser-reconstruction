@@ -11,10 +11,10 @@ from utils import *
 
 my_device = 'cpu'
 
-le_admm_u = torch.load('saved_models/model_le_admm_u_custom.pt', map_location=my_device)
+le_admm_u = torch.load('saved_models/model_le_admm_u_custom_final.pt', map_location=my_device)
 le_admm_u.admm_model.cuda_device = my_device
 
-img_index = 3
+img_index = 7
 
 file_path_diffuser = 'sample_images/diffuser/'
 file_path_lensed = 'sample_images/lensed/'
