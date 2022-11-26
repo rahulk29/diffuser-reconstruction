@@ -60,11 +60,11 @@ class GDSolver:
     def crop_array(self, X):
         w, h = X.shape
         X_out = np.zeros(X.shape)
-        for i in range(w // self.nx):
+        for i in range(self.nx):
             start_i, end_i = w // self.nx * i, math.floor(
                 w // self.nx * (i + self.fill_factor)
             )
-            for j in range(h // self.ny):
+            for j in range(self.ny):
                 start_j, end_j = h // self.ny * j, math.floor(
                     h // self.ny * (j + self.fill_factor)
                 )
@@ -72,8 +72,16 @@ class GDSolver:
         return X_out
 
     def load_data(self):
-        self.psf = np.load(self.psf_file).astype("float32")[:, :, self.channel]
-        self.data = np.load(self.data_file).astype("float32")[:, :, self.channel]
+        self.psf = np.load(self.psf_file).astype("float32")
+        self.data = np.load(self.data_file).astype("float32")
+
+        if len(self.psf.shape) == 2:
+            self.psf = np.dstack([self.psf] * 3)
+        if len(self.data.shape) == 2:
+            self.data = np.dstack([self.data] * 3)
+
+        self.psf = self.psf[:, :, self.channel]
+        self.data = self.data[:, :, self.channel]
 
         # Subtract non-trivial background
         bg = np.mean(self.psf[5:15, 5:15])
@@ -183,12 +191,13 @@ class GDSolver:
 
 if __name__ == "__main__":
     images = []
-    for channel in range(3):
-        print(f"channel = {channel}")
-        gd_solver = GDSolver(fill_factor=0.8, channel=channel)
-        images.append(gd_solver.run())
+    # for channel in range(3):
+    #     print(f"channel = {channel}")
+    #     gd_solver = GDSolver(fill_factor=0.8, channel=channel)
+    #     images.append(gd_solver.run())
+    gd_solver = GDSolver(f=0.25, fill_factor=0.8, psf_file="../../DiffuserCam-Tutorial/tutorial/psf_sample.npy", data_file="../../DiffuserCam-Tutorial/tutorial/rawdata_hand_sample.npy")
 
-    image = np.stack(images, axis=-1)
+    image = gd_solver.run()
 
     utils.display_array(image, "Final reconstruction", cmap="gray")
 

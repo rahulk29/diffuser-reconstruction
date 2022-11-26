@@ -5,11 +5,14 @@ from admm_rgb_pytorch import *
 import admm_filters_no_soft as admm_s
 
 class ADMM_Net(nn.Module):
-    def __init__(self, batch_size, h, iterations, learning_options = {'learned_vars': []}, 
+    def __init__(self, batch_size, h, iterations, fill_factor = 1, nx = 1, ny = 1, learning_options = {'learned_vars': []}, 
                  cuda_device = torch.device('cpu'), le_admm_s = False, denoise_model = []):
         super(ADMM_Net, self).__init__()
         
         self.iterations = iterations              # Number of unrolled iterations
+        self.fill_factor = fill_factor
+        self.nx = nx
+        self.ny = ny
         self.batch_size = batch_size              # Batch size 
         self.autotune = False                     # Using autotune (True or False)
         self.realdata = True                      # Real Data or Simulated Measurements
@@ -109,7 +112,20 @@ class ADMM_Net(nn.Module):
         
             
         Cty = pad_zeros_torch(self, y)                      # Zero padded input
-        CtC = pad_zeros_torch(self, torch.ones_like(y))     # Zero padded ones 
+        CtC = torch.zeros_like(y)     # Crop mask
+
+        w, h = CtC.shape
+        for i in range(self.nx):
+            start_i, end_i = w // self.nx * i, math.floor(
+                w // self.nx * (i + self.fill_factor)
+            )
+            for j in range(self.ny):
+                start_j, end_j = h // self.ny * j, math.floor(
+                    h // self.ny * (j + self.fill_factor)
+                )
+                CtC[start_i:end_i, start_j:end_j] = 1
+
+        CtC = pad_zeros_torch(self, CtC)
         
         # Create list of inputs/outputs         
         in_vars = []; in_vars1 = []
