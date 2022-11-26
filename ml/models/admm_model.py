@@ -3,6 +3,7 @@ import torch.nn as nn
 from admm_helper_functions_torch import *
 from admm_rgb_pytorch import *
 import admm_filters_no_soft as admm_s
+from utils import crop_array
 
 class ADMM_Net(nn.Module):
     def __init__(self, batch_size, h, iterations, fill_factor = 1, nx = 1, ny = 1, learning_options = {'learned_vars': []}, 
@@ -108,25 +109,11 @@ class ADMM_Net(nn.Module):
         
         # Otherwise, input is the normalized Diffuser Image 
         else:
-            y = inputs
+            y = crop_array(inputs, self.fill_factor, self.nx, self.ny)
         
             
         Cty = pad_zeros_torch(self, y)                      # Zero padded input
-        CtC = torch.zeros_like(y)     # Crop mask
-
-        w, h = CtC.shape
-        for i in range(self.nx):
-            start_i, end_i = w // self.nx * i, math.floor(
-                w // self.nx * (i + self.fill_factor)
-            )
-            for j in range(self.ny):
-                start_j, end_j = h // self.ny * j, math.floor(
-                    h // self.ny * (j + self.fill_factor)
-                )
-                CtC[start_i:end_i, start_j:end_j] = 1
-
-        CtC = pad_zeros_torch(self, CtC)
-        
+        CtC = pad_zeros_torch(self, crop_array(torch.ones_like(y), self.fill_factor, self.nx, self.ny))     # Crop mask
         # Create list of inputs/outputs         
         in_vars = []; in_vars1 = []
         in_vars2 = []; Hsk_list = []
