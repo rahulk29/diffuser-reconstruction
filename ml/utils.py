@@ -466,8 +466,8 @@ def run_time_test_real(model, inputs, labels):
     return out_color_converged, elapsed, out_psnr, out_mse
 
 def crop_array(X, fill_factor, nx, ny):
-    w = X.shape[0]
-    h = X.shape[1]
+    w = X.shape[-1]
+    h = X.shape[-2]
     X_out = torch.zeros_like(X)
     for i in range(nx):
         start_i, end_i = w // nx * i, math.floor(
@@ -477,5 +477,5 @@ def crop_array(X, fill_factor, nx, ny):
             start_j, end_j = h // ny * j, math.floor(
                 h // ny * (j + fill_factor)
             )
-            X_out[start_i:end_i, start_j:end_j, ...] = X[start_i:end_i, start_j:end_j, ...]
+            X_out[..., start_j:end_j, start_i:end_i] = X[..., start_j:end_j, start_i:end_i]
     return X_out
