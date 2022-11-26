@@ -3,7 +3,8 @@ import torch.nn as nn
 from admm_helper_functions_torch import *
 from admm_rgb_pytorch import *
 import admm_filters_no_soft as admm_s
-from utils import crop_array
+from utils import crop_array, preplot
+import matplotlib.pyplot as plt
 
 class ADMM_Net(nn.Module):
     def __init__(self, batch_size, h, iterations, fill_factor = 1, nx = 1, ny = 1, learning_options = {'learned_vars': []}, 
@@ -111,7 +112,7 @@ class ADMM_Net(nn.Module):
         else:
             y = crop_array(inputs, self.fill_factor, self.nx, self.ny)
         
-            
+        self.y = y
         Cty = pad_zeros_torch(self, y)                      # Zero padded input
         CtC = pad_zeros_torch(self, crop_array(torch.ones_like(y), self.fill_factor, self.nx, self.ny))     # Crop mask
         # Create list of inputs/outputs         
