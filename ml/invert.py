@@ -15,12 +15,14 @@ sys.path.append("models/")
 num_save = 1000
 
 
-def invert_psf(regularizer, iters):
+def invert_psf(regularizer, iters, lamb=0.001):
     device = "cpu"
+
+    print(f'Inverting PSF with regularizer {regularizer}, lambda = {lamb:.3f}, iters = {iters}, device = {device}')
 
     file_path_diffuser = "sample_images/diffuser/"
     file_path_lensed = "sample_images/lensed/"
-    save_dir = get_savedir(regularizer)
+    save_dir = get_savedir(regularizer, lamb)
     # Only used for referencing expected image sizes
     img_index = 3
 
@@ -63,7 +65,7 @@ def invert_psf(regularizer, iters):
     with torch.autograd.detect_anomaly():
         for i in range(iters):
             optimizer.zero_grad()
-            cost = loss(forward(x), y) + reg_fn(x)
+            cost = loss(forward(x), y) + lamb * reg_fn(x)
             cost.backward()
             optimizer.step()
             print(f"Completed iteration {i+1}/{iters}")
@@ -84,24 +86,33 @@ def plot():
     plt.show()
 
 
-def test_psf(regularizer, iters=None):
+def test_psf(regularizer, lamb, iters=None):
     device = "cpu"
     if iters is None:
         filename = "psf.pt"
     else:
         filename = f"psf_{iters}.pt"
 
-    path = os.path.join(get_savedir(regularizer), "psf.pt")
+    path = os.path.join(get_savedir(regularizer, lamb), filename)
     x = torch.load(path).to(device)
     forward = torch.load("saved_models/model_unet.pt", map_location=device)
+
     out = forward(x)[0].detach().numpy()
+    x = x[0].detach().numpy()
+
+    print(x)
+
     plt.imshow(utils.preplot(out))
+    plt.title("Forward model applied to PSF")
+    plt.show()
+    plt.imshow(utils.preplot(x))
+    plt.title("Raw PSF")
     plt.show()
 
 
-def get_savedir(regularizer):
+def get_savedir(regularizer, lamb):
     SAVE_DIR = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), f"inverted_psfs_reg_{regularizer}/"
+        os.path.dirname(os.path.abspath(__file__)), f"experiments/inverted_psfs_reg_{regularizer}_{lamb:.3f}/"
     )
     pathlib.Path(SAVE_DIR).mkdir(parents=True, exist_ok=True)
     return SAVE_DIR
@@ -114,16 +125,17 @@ if __name__ == "__main__":
     parser.add_argument(
         "-r", "--regularizer", choices=["NONE", "TV", "L0", "L1", "L2"], default="NONE"
     )
-    parser.add_argument("-n", "--num-iters", type=int, default=50000)
+    parser.add_argument("-n", "--num-iters", type=int, default=None)
+    parser.add_argument("--lamb", type=float, default=0.001)
     parser.add_argument("-i", "--invert", action="store_true")
     parser.add_argument("-t", "--test", action="store_true")
 
     args = parser.parse_args()
 
     if args.invert:
-        invert_psf(args.regularizer, args.num_iters)
+        invert_psf(args.regularizer, args.num_iters, lamb=args.lamb)
     if args.test:
-        test_psf(args.regularizer, args.num_iters)
+        test_psf(args.regularizer, iters=args.num_iters)
     if not (args.test or args.invert):
         print(
             "No work done. Specify --invert or --test to invert or test a PSF, respectively."
