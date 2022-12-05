@@ -31,7 +31,7 @@ def crop(x, h):
     return x[:, :, C01:C02, C11:C12]
 
 def load_psf():
-    ds = 1
+    ds = 4
     psf_diffuser = load_psf_image(PSF_PATH, downsample=1, rgb=False)
     psf_diffuser = np.sum(psf_diffuser, axis=2)
 
@@ -40,6 +40,9 @@ def load_psf():
                                  (psf_diffuser.shape[0]//ds,psf_diffuser.shape[1]//ds), 
                                                               mode='constant', anti_aliasing=True)
     return h
+
+def normalize(x):
+    return x / np.max(x)
 
 def pad_zeros_torch(x, h):
     dims0, dims1 = h.shape[0], h.shape[1]
@@ -67,4 +70,14 @@ if __name__ == "__main__":
     trainloader = torch.utils.data.DataLoader(trainset, batch_size = 1, shuffle=True)
 
     for i, data in enumerate(trainloader):
-        print("hi")
+        data, labels = data['image'].to(device), data['label'].to(device)
+        inputs = pad_zeros_torch(labels, h)
+        y = conv_fwd(inputs, h, H)
+        y = normalize(y[0].detach().numpy())
+        data = normalize(data[0].detach().numpy())
+
+        plt.imshow(preplot(y))
+        plt.show()
+        plt.imshow(preplot(data))
+        plt.show()
+        break
